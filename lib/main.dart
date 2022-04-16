@@ -83,7 +83,16 @@ loaddata();
     )
     ),
     
-title: ShimerWidget.rectangular(height:16),
+title: Align(
+  alignment: Alignment.centerLeft,
+  child:   ShimerWidget.rectangular(
+  
+    //30 percent of a screen
+  
+      width: MediaQuery.of(context).size.width*0.3,
+  
+      height:16),
+),
     subtitle: ShimerWidget.rectangular(height: 12),
   );
 
@@ -92,7 +101,7 @@ title: ShimerWidget.rectangular(height:16),
     setState(() {
       isLoading =true;
     });
-    await Future.delayed(Duration(seconds: 2),() {
+    await Future.delayed(Duration(seconds: 4),() {
 
     });
     foods = List.of(allFoods);
