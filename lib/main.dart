@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'food.dart';
@@ -8,8 +7,8 @@ import 'food.dart';
 void main() {
   runApp( MyApp());
 }
-
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -17,161 +16,187 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home:  MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
 
-  _Myhome createState() => _Myhome();
-
-}
-class _Myhome extends State<MyHomePage> {
-  bool isLoading = false;
-  List<Food> foods = [];
   @override
-  void initState() {
-     super.initState();
+  _MyHomePageState createState() => _MyHomePageState();
+}
 
-loaddata();
-  }
+class _MyHomePageState extends State<MyHomePage> {
+
+  // we have initialized active step to 0 so that
+  // our stepper widget will start from first step
+  int _activeCurrentStep = 0;
+
+  TextEditingController name = TextEditingController();
+  TextEditingController email = TextEditingController();
+  TextEditingController pass = TextEditingController();
+  TextEditingController address = TextEditingController();
+  TextEditingController pincode = TextEditingController();
+
+  // Here we have created list of steps
+  // that are required to complete the form
+  List<Step> stepList() => [
+    // This is step1 which is called Account.
+    // Here we will fill our personal details
+    Step(
+      state: _activeCurrentStep <= 0 ? StepState.editing : StepState.complete,
+      isActive: _activeCurrentStep >= 0,
+      title: const Text('Account'),
+      content: Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height*.7,
+        color: Colors.green,
+        child: Column(
+          children: [
+            TextField(
+              controller: name,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Full Name',
+              ),
+            ),
+            const SizedBox(
+              height: 1,
+            ),
+            TextField(
+              controller: email,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Email',
+              ),
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            TextField(
+              controller: pass,
+              obscureText: true,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Password',
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    // This is Step2 here we will enter our address
+    Step(
+        state:
+        _activeCurrentStep <= 1 ? StepState.editing : StepState.complete,
+        isActive: _activeCurrentStep >= 1,
+        title: const Text('Address'),
+        content: Container(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          color: Colors.pink,
+          child: Column(
+            children: [
+              const SizedBox(
+                height: 8,
+              ),
+              TextField(
+                controller: address,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Full House Address',
+                ),
+              ),
+              const SizedBox(
+                height: 8,
+              ),
+              TextField(
+                controller: pincode,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Pin Code',
+                ),
+              ),
+            ],
+          ),
+        )),
+
+    // This is Step3 here we will display all the details
+    // that are entered by the user
+    Step(
+        state: StepState.complete,
+        isActive: _activeCurrentStep >= 2,
+        title: const Text('Confirm'),
+        content: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            color: Colors.yellowAccent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text('Name: ${name.text}'),
+                Text('Email: ${email.text}'),
+                Text('Password: ${pass.text}'),
+                Text('Address : ${address.text}'),
+                Text('PinCode : ${pincode.text}'),
+              ],
+            )))
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        title: Text("Shimmer effect"),
         centerTitle: true,
-        actions: [
-          IconButton(onPressed: loaddata
-          , icon: Icon(Icons.refresh))
-        ],
+        backgroundColor: Colors.green,
+        title: const Text('GeeksforGeeks',style: TextStyle(color: Colors.white), ),
       ),
-      body:ListView.builder(
-        itemCount: isLoading ?5 : foods.length,
-        itemBuilder: (context,index){
-          if(isLoading){
-            return buildFoodShimmer();
-          }else {
-            final food = foods[index];
-            return buildfood(food);
+      // Here we have initialized the stepper widget
+      body: Stepper(
+        type: StepperType.horizontal,
+        currentStep: _activeCurrentStep,
+        steps: stepList(),
+
+        // onStepContinue takes us to the next step
+        onStepContinue: () {
+          if (_activeCurrentStep < (stepList().length - 1)) {
+            setState(() {
+              _activeCurrentStep += 1;
+            });
           }
         },
 
-      )
+        // onStepCancel takes us to the previous step
+        onStepCancel: () {
+          if (_activeCurrentStep == 0) {
+            return;
+          }
 
+          setState(() {
+            _activeCurrentStep -= 1;
+          });
+        },
 
+        // onStepTap allows to directly click on the particular step we want
+        onStepTapped: (int index) {
+          setState(() {
+            _activeCurrentStep = index;
+          });
+        },
+
+      ),
     );
   }
-
-  Widget buildFoodShimmer() =>ListTile(
-    leading: ShimerWidget.circular(width:64,height:64,
-    shapeBorder: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    )
-    ),
-    
-title: Align(
-  alignment: Alignment.centerLeft,
-  child:   ShimerWidget.rectangular(
-  
-    //30 percent of a screen
-  
-      width: MediaQuery.of(context).size.width*0.3,
-  
-      height:16),
-),
-    subtitle: ShimerWidget.rectangular(height: 12),
-  );
-
-  Future loaddata()  async{
-
-    setState(() {
-      isLoading =true;
-    });
-    await Future.delayed(Duration(seconds: 4),() {
-
-    });
-    foods = List.of(allFoods);
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  List<Food> allFoods = [
-    Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  ];
-
-  Widget buildfood(Food food) => ListTile(
-    leading: CircleAvatar(
-      radius: 32,
-      backgroundImage: NetworkImage(food.urlImage),
-    ),
-    title: Text(
-      food.title,
-      style: TextStyle(
-        fontSize: 16,
-      ),
-    ),
-    subtitle: Text(
-      food.description,
-      style: TextStyle(
-        fontSize: 12
-      ),
-    ),
-
-  );
 }
+check stepper button next and previous
+https://stackoverflow.com/questions/66228627/how-can-i-change-the-labels-of-the-continue-cancel-buttons-in-flutter-stepper
 
 
 
-
-class ShimerWidget  extends StatelessWidget{
-  final double width;
-  final double height;
-  final ShapeBorder  shapeBorder;
-
-  const ShimerWidget.rectangular({
-    this.width = double.infinity,
-    required this.height,
-}): this.shapeBorder = const RoundedRectangleBorder();
-
-  const ShimerWidget.circular({
-    required this.width,
-    required this.height,
-    this.shapeBorder = const CircleBorder()
-  });
- @override
-  Widget build(BuildContext context) =>
-     Shimmer.fromColors(
-       baseColor: Colors.grey[400]!,
-       highlightColor: Colors.grey[300]!,
-       child: Container(
-   width: width,
-   height: height,
-   decoration: ShapeDecoration(
-     color: Colors.grey[400]!,
-     shape: shapeBorder
-   ),
-
- ),
-     );
-}
 
 
