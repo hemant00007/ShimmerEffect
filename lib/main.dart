@@ -54,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
       content: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height*.7,
-        color: Colors.green,
+        color: Colors.pink,
         child: Column(
           children: [
             TextField(
@@ -65,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             const SizedBox(
-              height: 1,
+              height: 350,
             ),
             TextField(
               controller: email,
@@ -97,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text('Address'),
         content: Container(
           width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
+          height: MediaQuery.of(context).size.height*.7,
           color: Colors.pink,
           child: Column(
             children: [
@@ -133,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text('Confirm'),
         content: Container(
             width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
+            height: MediaQuery.of(context).size.height*.7,
             color: Colors.yellowAccent,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -158,9 +158,12 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       // Here we have initialized the stepper widget
       body: Stepper(
+
         type: StepperType.horizontal,
         currentStep: _activeCurrentStep,
         steps: stepList(),
+
+
 
         // onStepContinue takes us to the next step
         onStepContinue: () {
@@ -170,6 +173,45 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           }
         },
+
+    controlsBuilder: (BuildContext context, ControlsDetails details) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+
+          TextButton(
+            onPressed: details.onStepCancel,
+            child: Container(
+                padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                color: Colors.indigo,
+
+                child: const Text('Previous',
+                  style: TextStyle(
+                      color: Colors.white
+                  ),)
+
+            ),
+          ),
+          Visibility(
+            visible: true,
+            child: TextButton(
+
+              onPressed: details.onStepContinue,
+              child: Container(
+                  padding: EdgeInsets.fromLTRB(30, 10, 30, 10),
+                color: Colors.indigo,
+
+                  child: const Text('Next',
+                  style: TextStyle(
+                    color: Colors.white
+                  ),)
+
+              ),
+            ),
+          ),
+        ],
+      );
+    },
 
         // onStepCancel takes us to the previous step
         onStepCancel: () {
@@ -193,8 +235,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-check stepper button next and previous
-https://stackoverflow.com/questions/66228627/how-can-i-change-the-labels-of-the-continue-cancel-buttons-in-flutter-stepper
+// check stepper button next and previous
+// https://stackoverflow.com/questions/66228627/how-can-i-change-the-labels-of-the-continue-cancel-buttons-in-flutter-stepper
 
 
 
