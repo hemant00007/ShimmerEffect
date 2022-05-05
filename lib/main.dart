@@ -1,6 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-
+import 'package:http/http.dart' as http;
 import 'food.dart';
 
 
@@ -18,225 +20,114 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(),
+      home:  MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+
+
+
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late String countryname, message;
+  late bool error;
+  var data;
 
-  // we have initialized active step to 0 so that
-  // our stepper widget will start from first step
-  int _activeCurrentStep = 0;
-
-  TextEditingController name = TextEditingController();
-  TextEditingController email = TextEditingController();
-  TextEditingController pass = TextEditingController();
-  TextEditingController address = TextEditingController();
-  TextEditingController pincode = TextEditingController();
-
-  // Here we have created list of steps
-  // that are required to complete the form
-  List<Step> stepList() => [
-    // This is step1 which is called Account.
-    // Here we will fill our personal details
-    Step(
-      state: _activeCurrentStep <= 0 ? StepState.editing : StepState.complete,
-      isActive: _activeCurrentStep >= 0,
-      title: const Text('Account'),
-      content: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height*.7,
-        color: Colors.pink,
-        child: Column(
-          children: [
-            TextField(
-              controller: name,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Full Name',
-              ),
-            ),
-            const SizedBox(
-              height: 350,
-            ),
-            TextField(
-              controller: email,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Email',
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            TextField(
-              controller: pass,
-              obscureText: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Password',
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-    // This is Step2 here we will enter our address
-    Step(
-        state:
-        _activeCurrentStep <= 1 ? StepState.editing : StepState.complete,
-        isActive: _activeCurrentStep >= 1,
-        title: const Text('Address'),
-        content: Container(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height*.7,
-          color: Colors.pink,
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 8,
-              ),
-              TextField(
-                controller: address,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Full House Address',
-                ),
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              TextField(
-                controller: pincode,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Pin Code',
-                ),
-              ),
-            ],
-          ),
-        )),
-
-    // This is Step3 here we will display all the details
-    // that are entered by the user
-    Step(
-        state: StepState.complete,
-        isActive: _activeCurrentStep >= 2,
-        title: const Text('Confirm'),
-        content: Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height*.7,
-            color: Colors.yellowAccent,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text('Name: ${name.text}'),
-                Text('Email: ${email.text}'),
-                Text('Password: ${pass.text}'),
-                Text('Address : ${address.text}'),
-                Text('PinCode : ${pincode.text}'),
-              ],
-            )))
-  ];
+  String mgdh ='https://mgdh.in/api/v2/user/product/type';
 
   @override
+  void initState(){
+    super.initState();
+    countryname = "Nepal";
+    callapicat();
+  }
+  // Widget cityList(){
+  //   List<Category> categorylist = List<Category>.from(
+  //     data["data"].map((i){
+  //       return Category.fromJSON(i);
+  //     })
+  //   );
+
+  // }
+  Widget cityList() {
+    //widget function for city list
+    List<Category> citylist = List<Category>.from(
+        data["data"].map((i) {
+          return Category.fromJSON(i);
+        })
+    );
+
+    return DropdownButton(
+      hint: Text("select"),
+        isExpanded: true,
+        items: citylist.map((category){
+          return DropdownMenuItem(
+              child: Text(category.name),
+            value: category.name,
+          );
+        }).toList(),
+        onChanged: (value){
+        print("Selected city is ${value}");
+        });
+
+    //sear
+  }
+
+ @override
   Widget build(BuildContext context) {
+    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: Colors.green,
-        title: const Text('GeeksforGeeks',style: TextStyle(color: Colors.white), ),
+        backgroundColor: Colors.indigo,
+        title: Text("Dropdown button"),
       ),
-      // Here we have initialized the stepper widget
-      body: Stepper(
+      body: Column(
+        children: [
+          Container(
+            child:cityList(),
 
-        type: StepperType.horizontal,
-        currentStep: _activeCurrentStep,
-        steps: stepList(),
-
-
-
-        // onStepContinue takes us to the next step
-        onStepContinue: () {
-          if (_activeCurrentStep < (stepList().length - 1)) {
-            setState(() {
-              _activeCurrentStep += 1;
-            });
-          }
-        },
-
-    controlsBuilder: (BuildContext context, ControlsDetails details) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-
-          TextButton(
-            onPressed: details.onStepCancel,
-            child: Container(
-                padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
-                color: Colors.indigo,
-
-                child: const Text('Previous',
-                  style: TextStyle(
-                      color: Colors.white
-                  ),)
-
-            ),
-          ),
-          Visibility(
-            visible: true,
-            child: TextButton(
-
-              onPressed: details.onStepContinue,
-              child: Container(
-                  padding: EdgeInsets.fromLTRB(30, 10, 30, 10),
-                color: Colors.indigo,
-
-                  child: const Text('Next',
-                  style: TextStyle(
-                    color: Colors.white
-                  ),)
-
-              ),
-            ),
           ),
         ],
-      );
-    },
-
-        // onStepCancel takes us to the previous step
-        onStepCancel: () {
-          if (_activeCurrentStep == 0) {
-            return;
-          }
-
-          setState(() {
-            _activeCurrentStep -= 1;
-          });
-        },
-
-        // onStepTap allows to directly click on the particular step we want
-        onStepTapped: (int index) {
-          setState(() {
-            _activeCurrentStep = index;
-          });
-        },
-
       ),
+
+    );
+  }
+
+  Future<void> callapicat() async {
+    Map<String, String> header = {
+      "token": 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjE1MDUiLCJuYW1lIjoiU2hvcCBVc2VyIiwibW9iaWxlIjoiOTk5OTk5OTk5OSIsImNyZWF0ZWRfYXQiOiIyMDIxLTA1LTIxIDE1OjM5OjA3IiwidXBkYXRlZF9hdCI6IjIwMjEtMDUtMjEgMTU6Mzk6MDciLCJ0aW1lIjoxNjI3OTAyMDM4fQ.zo_YfBHZe8J6a_OeoR5DLxVvjgdEEV_I60ReoUCBXRI'
+    };
+    var res = await http.get(Uri.parse(mgdh),headers:header );
+    if(res.statusCode==200){
+      setState(() {
+        data = json.decode(res.body);
+        print(data);
+      });
+    }
+
+
+  }
+
+
+}
+class Category {
+  late String id;
+  late String name;
+
+  Category({required this.id,required this.name});
+  factory Category.fromJSON(Map<String,dynamic>json){
+    return Category(
+        id: json["id"],
+        name: json['name']
     );
   }
 }
-// check stepper button next and previous
-// https://stackoverflow.com/questions/66228627/how-can-i-change-the-labels-of-the-continue-cancel-buttons-in-flutter-stepper
 
 
 
