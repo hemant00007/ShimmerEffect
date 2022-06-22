@@ -1,177 +1,174 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:pin_code_fields/pin_code_fields.dart';
-import 'package:shimmer/shimmer.dart';
 
-import 'food.dart';
+import 'package:http/http.dart' as http;
 
 
-void main() {
-  runApp( MyApp());
-}
+
+
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home:  MyHomePage(),
-    );
+      // Remove the debug banner
+        debugShowCheckedModeBanner: false,
+        title: 'Kindacode.com',
+        theme: ThemeData(
+          primarySwatch: Colors.pink,
+        ),
+        home: HomePage());
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
-  _Myhome createState() => _Myhome();
-
+  @override
+  _HomePageState createState() => _HomePageState();
 }
-class _Myhome extends State<MyHomePage> {
-  bool isLoading = false;
-  List<Food> foods = [];
+
+class _HomePageState extends State<HomePage> {
+  // We will fetch data from this Rest api
+  final _baseUrl = 'https://jsonplaceholder.typicode.com/posts';
+
+  // At the beginning, we fetch the first 20 posts
+  int _page = 0;
+  int _limit = 20;
+
+  // There is next page or not
+  bool _hasNextPage = true;
+
+  // Used to display loading indicators when _firstLoad function is running
+  bool _isFirstLoadRunning = false;
+
+  // Used to display loading indicators when _loadMore function is running
+  bool _isLoadMoreRunning = false;
+
+  // This holds the posts fetched from the server
+  List _posts = [];
+
+  // This function will be called when the app launches (see the initState function)
+  void _firstLoad() async {
+    setState(() {
+      _isFirstLoadRunning = true;
+    });
+    try {
+      final res =
+      await http.get(Uri.parse("$_baseUrl?_page=$_page&_limit=$_limit"));
+      setState(() {
+        _posts = json.decode(res.body);
+      });
+    } catch (err) {
+      print('Something went wrong');
+    }
+
+    setState(() {
+      _isFirstLoadRunning = false;
+    });
+  }
+
+  // This function will be triggered whenver the user scroll
+  // to near the bottom of the list view
+  void _loadMore() async {
+    if (_hasNextPage == true &&
+        _isFirstLoadRunning == false &&
+        _isLoadMoreRunning == false &&
+        _controller.position.extentAfter < 300) {
+      setState(() {
+        _isLoadMoreRunning = true; // Display a progress indicator at the bottom
+      });
+      _page += 1; // Increase _page by 1
+      try {
+        final res =
+        await http.get(Uri.parse("$_baseUrl?_page=$_page&_limit=$_limit"));
+
+        final List fetchedPosts = json.decode(res.body);
+        if (fetchedPosts.length > 0) {
+          setState(() {
+            _posts.addAll(fetchedPosts);
+          });
+        } else {
+          // This means there is no more data
+          // and therefore, we will not send another GET request
+          setState(() {
+            _hasNextPage = false;
+          });
+        }
+      } catch (err) {
+        print('Something went wrong!');
+      }
+
+      setState(() {
+        _isLoadMoreRunning = false;
+      });
+    }
+  }
+
+  // The controller for the ListView
+  late ScrollController _controller;
+
   @override
   void initState() {
-     super.initState();
-
-loaddata();
+    super.initState();
+    _firstLoad();
+    _controller = new ScrollController()..addListener(_loadMore);
   }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_loadMore);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
       appBar: AppBar(
-        title: Text("Shimmer effect"),
-        centerTitle: true,
-        actions: [
-          IconButton(onPressed: loaddata
-          , icon: Icon(Icons.refresh))
+        title: Text('Kindacode.com'),
+      ),
+      body: _isFirstLoadRunning
+          ? Center(
+        child: CircularProgressIndicator(),
+      )
+          : Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              controller: _controller,
+              itemCount: _posts.length,
+              itemBuilder: (_, index) => Card(
+                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                child: ListTile(
+                  title: Text(_posts[index]['title']),
+                  subtitle: Text(_posts[index]['body']),
+                ),
+              ),
+            ),
+          ),
+
+          // when the _loadMore function is running
+          if (_isLoadMoreRunning == true)
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 40),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+
+          // When nothing else to load
+          if (_hasNextPage == false)
+            Container(
+              padding: const EdgeInsets.only(top: 30, bottom: 40),
+              color: Colors.amber,
+              child: Center(
+                child: Text('You have fetched all of the content'),
+              ),
+            ),
         ],
       ),
-      body:ListView.builder(
-        itemCount: isLoading ?5 : foods.length,
-        itemBuilder: (context,index){
-          if(isLoading){
-            return buildFoodShimmer();
-          }else {
-            final food = foods[index];
-            return buildfood(food);
-          }
-        },
-
-      )
-
-
     );
   }
-
-  Widget buildFoodShimmer() =>ListTile(
-    leading: ShimerWidget.circular(width:64,height:64,
-    shapeBorder: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    )
-    ),
-    
-title: Align(
-  alignment: Alignment.centerLeft,
-  child:   ShimerWidget.rectangular(
-  
-    //30 percent of a screen
-  
-      width: MediaQuery.of(context).size.width*0.3,
-  
-      height:16),
-),
-    subtitle: ShimerWidget.rectangular(height: 12),
-  );
-
-  Future loaddata()  async{
-
-    setState(() {
-      isLoading =true;
-    });
-    await Future.delayed(Duration(seconds: 4),() {
-
-    });
-    foods = List.of(allFoods);
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  List<Food> allFoods = [
-    Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  Food(urlImage: 'https://www.magadhtmt.com/wp-content/uploads/2019/04/Magadh-Mahan-mail-logo-ratina.png', title: "This is a testing work", description: "I am providing a description for testing "),
-  ];
-
-  Widget buildfood(Food food) => ListTile(
-    leading: CircleAvatar(
-      radius: 32,
-      backgroundImage: NetworkImage(food.urlImage),
-    ),
-    title: Text(
-      food.title,
-      style: TextStyle(
-        fontSize: 16,
-      ),
-    ),
-    subtitle: Text(
-      food.description,
-      style: TextStyle(
-        fontSize: 12
-      ),
-    ),
-
-  );
 }
-
-
-
-
-class ShimerWidget  extends StatelessWidget{
-  final double width;
-  final double height;
-  final ShapeBorder  shapeBorder;
-
-  const ShimerWidget.rectangular({
-    this.width = double.infinity,
-    required this.height,
-}): this.shapeBorder = const RoundedRectangleBorder();
-
-  const ShimerWidget.circular({
-    required this.width,
-    required this.height,
-    this.shapeBorder = const CircleBorder()
-  });
- @override
-  Widget build(BuildContext context) =>
-     Shimmer.fromColors(
-       baseColor: Colors.grey[400]!,
-       highlightColor: Colors.grey[300]!,
-       child: Container(
-   width: width,
-   height: height,
-   decoration: ShapeDecoration(
-     color: Colors.grey[400]!,
-     shape: shapeBorder
-   ),
-
- ),
-     );
-}
-
-
